@@ -1,0 +1,31 @@
+{
+  "name": "web-rtc-sample",
+  "private": true,
+  "prettier": "prettier-config-standard",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "ncu": "npm-check-updates -i"
+  },
+  "keywords": [],
+  "author": "Joey Fang",
+  "license": "ISC",
+  "packageManager": "pnpm@10.6.5",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@next/eslint-plugin-next": "^15.5.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-n": "^17.21.3",
+    "eslint-plugin-promise": "^7.2.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "npm-check-updates": "^18.0.2",
+    "prettier-config-standard": "^7.0.0",
+    "typescript": "^5.9.2"
+  }
+}
