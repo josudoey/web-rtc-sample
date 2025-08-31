@@ -37,7 +37,7 @@ interface Message {
   type: 'sent' | 'received'
 }
 
-export function ConnectionCard() {
+export function RTCPeerCard() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()

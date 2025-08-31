@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { Theme } from '@radix-ui/themes'
 import '@radix-ui/themes/styles.css'
 import './globals.css'
@@ -10,7 +11,9 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body>
-        <Theme>{children}</Theme>
+        <Suspense>
+          <Theme>{children}</Theme>
+        </Suspense>
       </body>
     </html>
   )
