@@ -7,7 +7,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "pnpm run --filter react-webrtc build",
+    "build:web": "pnpm run --filter react-webrtc build",
     "lint": "eslint .",
     "ncu": "npm-check-updates -i"
   },
