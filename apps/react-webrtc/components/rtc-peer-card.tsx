@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Send } from 'lucide-react'
 import { makeCallIn, makeCallOut } from '@/lib/rtc-peer'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 
 async function connect(peer: RTCPeerConnection, peerId: string) {
   try {
@@ -37,12 +38,15 @@ interface Message {
 }
 
 export function ConnectionCard() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const peerRef = useRef<RTCPeerConnection>(null)
   const channelRef = useRef<RTCDataChannel>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [state, setState] = useState<RTCDataChannelState>('connecting')
-
-  const [peerId, setConnectionId] = useState('')
+  const [peerId, setPeerId] = useState(searchParams.get('id') || '')
 
   const [messages, setMessages] = useState<Message[]>([])
   const [messageInput, setMessageInput] = useState('')
@@ -55,6 +59,13 @@ export function ConnectionCard() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleChangeConnectionId = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPeerId(e.target.value)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('id', e.target.value)
+    router.push(pathname + '?' + params.toString())
+  }
 
   const handleDisconnect = () => {
     setMessages([])
@@ -152,7 +163,7 @@ export function ConnectionCard() {
               <Input
                 id='connection-id'
                 value={peerId}
-                onChange={(e) => setConnectionId(e.target.value)}
+                onChange={handleChangeConnectionId}
                 disabled={isConnecting}
               />
             </div>
