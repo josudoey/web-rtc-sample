@@ -14,7 +14,6 @@
   "keywords": [],
   "author": "Joey Fang",
   "license": "ISC",
-  "packageManager": "pnpm@10.6.5",
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@next/eslint-plugin-next": "^15.5.0",
