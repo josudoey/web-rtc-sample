@@ -1,6 +1,6 @@
 'use client'
 
-import { RTCPeerCard } from '@/app/rtc-peer-card'
+import { RTCPeerCard } from '@/app/RTCPeerCard'
 
 export default function Home() {
   return (
