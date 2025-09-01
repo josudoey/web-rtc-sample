@@ -143,12 +143,15 @@ export async function makeCallIn(peer: RTCPeerConnection, peerId: string) {
   const message = await recvOfferMessage(socket)
   peer.setRemoteDescription(message.offer)
   const answer = await peer.createAnswer()
-  peer.setLocalDescription(answer)
-  const candidates = await recvCandidate(peer)
-  sendAnswerMessage(socket, {
-    peerId: message.peerId,
-    answer: mergeDescription(answer, candidates)
+
+  const replyAnwserPromise = recvCandidate(peer).then((candidates) => {
+    sendAnswerMessage(socket, {
+      peerId: message.peerId,
+      answer: mergeDescription(answer, candidates)
+    })
   })
+  peer.setLocalDescription(answer)
+  await replyAnwserPromise
 
   socket.close()
   return peer
