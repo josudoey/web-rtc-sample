@@ -73,6 +73,7 @@ function handleICECandidate(socket: WebSocket, peer: RTCPeerConnection) {
     const { payload } = data
     switch (data.type) {
       case 'CANDIDATE': {
+        console.log('addIceCandidate', payload.candidate)
         peer.addIceCandidate(payload.candidate)
       }
     }
@@ -169,40 +170,35 @@ function mergeDescription(
 }
 export async function makeCallIn(peer: RTCPeerConnection, peerId: string) {
   const socket = await createPeerWebSocket(peerId)
+  handleICECandidate(socket, peer)
+  const candidatePromise = recvICECandidate(peer)
   const message = await recvOfferMessage(socket)
   peer.setRemoteDescription(message.offer)
   const answer = await peer.createAnswer()
-  handleICECandidate(socket, peer)
-  const replyAnwserPromise = recvICECandidate(peer).then((candidates) => {
+  peer.setLocalDescription(answer)
+  await candidatePromise.then((candidates) => {
     sendAnswerMessage(socket, {
       peerId: message.peerId,
       answer: mergeDescription(answer, candidates)
     })
   })
-  peer.setLocalDescription(answer)
-  await replyAnwserPromise
   socket.close()
   return peer
 }
 
 export async function makeCallOut(peer: RTCPeerConnection, peerId: string) {
   const socket = await createPeerWebSocket(crypto.randomUUID())
+  const candidatePromise = recvICECandidate(peer)
   const offer = await peer.createOffer()
   peer.setLocalDescription(offer)
-  sendOfferMessage(socket, {
-    peerId,
-    offer
-  })
-  const message = await recvAnswerMessage(socket)
-  peer.addEventListener('icecandidate', (e) => {
-    if (!e.candidate) return
-    sendCandidateMessage(socket, {
+  await candidatePromise.then((candidates) => {
+    sendOfferMessage(socket, {
       peerId,
-      candidate: e.candidate
+      offer: mergeDescription(offer, candidates)
     })
   })
+  const message = await recvAnswerMessage(socket)
   peer.setRemoteDescription(message.answer)
-
   socket.close()
   return peer
 }
