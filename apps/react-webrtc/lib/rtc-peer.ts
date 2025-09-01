@@ -38,6 +38,47 @@ function createPeerWebSocket(id: string): Promise<WebSocket> {
   })
 }
 
+function recvICECandidate(peer: RTCPeerConnection): Promise<RTCIceCandidate[]> {
+  return new Promise<RTCIceCandidate[]>(function (resolve) {
+    const candidates: RTCIceCandidate[] = []
+    peer.addEventListener('icecandidate', (e) => {
+      if (!e.candidate) {
+        resolve(candidates)
+        return
+      }
+      candidates.push(e.candidate)
+    })
+  })
+}
+
+interface CandidateMessage {
+  peerId: string
+  candidate: RTCIceCandidate
+}
+function sendCandidateMessage(socket: WebSocket, message: CandidateMessage) {
+  socket.send(
+    JSON.stringify({
+      dst: message.peerId,
+      type: 'CANDIDATE',
+      payload: {
+        candidate: message.candidate
+      }
+    })
+  )
+}
+
+function handleICECandidate(socket: WebSocket, peer: RTCPeerConnection) {
+  socket.addEventListener('message', function (e) {
+    const data = JSON.parse(e.data)
+    const { payload } = data
+    switch (data.type) {
+      case 'CANDIDATE': {
+        peer.addIceCandidate(payload.candidate)
+      }
+    }
+  })
+}
+
 interface OfferMessage {
   peerId: string
   offer: RTCSessionDescriptionInit
@@ -88,6 +129,7 @@ function sendAnswerMessage(socket: WebSocket, message: AnswerMessage) {
     })
   )
 }
+
 function recvAnswerMessage(socket: WebSocket): Promise<AnswerMessage> {
   return new Promise(function (resolve, reject) {
     socket.addEventListener('message', function (e) {
@@ -104,19 +146,6 @@ function recvAnswerMessage(socket: WebSocket): Promise<AnswerMessage> {
     })
     socket.addEventListener('close', function () {
       reject(new Error('socket closed'))
-    })
-  })
-}
-
-function recvCandidate(peer: RTCPeerConnection): Promise<RTCIceCandidate[]> {
-  return new Promise<RTCIceCandidate[]>(function (resolve) {
-    const candidates: RTCIceCandidate[] = []
-    peer.addEventListener('icecandidate', (e) => {
-      if (!e.candidate) {
-        resolve(candidates)
-        return
-      }
-      candidates.push(e.candidate)
     })
   })
 }
@@ -143,8 +172,8 @@ export async function makeCallIn(peer: RTCPeerConnection, peerId: string) {
   const message = await recvOfferMessage(socket)
   peer.setRemoteDescription(message.offer)
   const answer = await peer.createAnswer()
-
-  const replyAnwserPromise = recvCandidate(peer).then((candidates) => {
+  handleICECandidate(socket, peer)
+  const replyAnwserPromise = recvICECandidate(peer).then((candidates) => {
     sendAnswerMessage(socket, {
       peerId: message.peerId,
       answer: mergeDescription(answer, candidates)
@@ -152,7 +181,6 @@ export async function makeCallIn(peer: RTCPeerConnection, peerId: string) {
   })
   peer.setLocalDescription(answer)
   await replyAnwserPromise
-
   socket.close()
   return peer
 }
@@ -166,6 +194,13 @@ export async function makeCallOut(peer: RTCPeerConnection, peerId: string) {
     offer
   })
   const message = await recvAnswerMessage(socket)
+  peer.addEventListener('icecandidate', (e) => {
+    if (!e.candidate) return
+    sendCandidateMessage(socket, {
+      peerId,
+      candidate: e.candidate
+    })
+  })
   peer.setRemoteDescription(message.answer)
 
   socket.close()
