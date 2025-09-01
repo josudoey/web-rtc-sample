@@ -170,11 +170,11 @@ function mergeDescription(
 }
 export async function makeCallIn(peer: RTCPeerConnection, peerId: string) {
   const socket = await createPeerWebSocket(peerId)
-  handleICECandidate(socket, peer)
-  const candidatePromise = recvICECandidate(peer)
+
   const message = await recvOfferMessage(socket)
   peer.setRemoteDescription(message.offer)
   const answer = await peer.createAnswer()
+  const candidatePromise = recvICECandidate(peer)
   peer.setLocalDescription(answer)
   await candidatePromise.then((candidates) => {
     sendAnswerMessage(socket, {
@@ -188,8 +188,8 @@ export async function makeCallIn(peer: RTCPeerConnection, peerId: string) {
 
 export async function makeCallOut(peer: RTCPeerConnection, peerId: string) {
   const socket = await createPeerWebSocket(crypto.randomUUID())
-  const candidatePromise = recvICECandidate(peer)
   const offer = await peer.createOffer()
+  const candidatePromise = recvICECandidate(peer)
   peer.setLocalDescription(offer)
   await candidatePromise.then((candidates) => {
     sendOfferMessage(socket, {
